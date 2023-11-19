@@ -253,18 +253,19 @@ class Star extends eskv.Widget {
 
 
 
-const instructionsText = 'Objective: Get the highest score you can by forming 7 words in the letter stack.\n\n'+
-'Play: For each row in the letter stack, use one or more letters in the current active row'+
+const instructionsText = 'Objective: Get the highest score you can by forming 7 words in the letter stack. '+
+'Try to beat the bronze, silver, and gold target scores.\n\n'+
+'Play: For each row in the letter stack, use one or more letters in the current active row '+
 'and the free stack (top of screen) to form a word by touching the letter tiles in sequence. '+
 'A score prompt will show for a valid word, which you can press to score the word. '+
 'Press any of the selected letters to reset the current word.\n\n'+
 'Scoring: Each word scores the sum of the tile values multiplied by the length of the word.\n\n'+
 'End game: The game ends when you have completed a word in all 7 rows in the letter stack '+
-'or you cannot form a valid word.'+
+'or you cannot form a valid word.\n\n'+
 'Progression: If you achieve the bronze star target value, you may progress to the next game';
 
 
-class Instructions extends eskv.BoxLayout {
+class Instructions extends eskv.ModalView {
     hints = {w:0.8,center_x:0.5}
     constructor() {
         super();
@@ -273,7 +274,7 @@ class Instructions extends eskv.BoxLayout {
             new eskv.Label({
                 hints:{h:null},
                 text: 'How to play',
-                fontSize: '0.1ah',
+                fontSize: '0.05ah',
             }),
             new eskv.ScrollView({ scrollW:false,
                 children: [
@@ -282,7 +283,7 @@ class Instructions extends eskv.BoxLayout {
                         text: instructionsText,
                         wrap: true,
                         wrapAtWord: true,
-                        fontSize: '0.05ah',
+                        fontSize: '0.04ah',
                         align: 'left',
                         valign: 'middle',
                     })
@@ -292,6 +293,24 @@ class Instructions extends eskv.BoxLayout {
     }
 }
 
+
+class MenuButton extends eskv.BasicButton {
+    constructor(props = {}) {
+        props['color'] = (app)=>app.colors['menuButtonForeground'];
+        props['selectColor'] = 'white';
+        props['bgColor'] = null;
+        super(props);
+    }
+    /**@type {eskv.BasicButton['draw']} */
+    draw(app, ctx) {
+        ctx.beginPath();
+        ctx.fillStyle = this._touching? this.selectColor:this.color;
+        ctx.rect(this.x+this.h/8, this.y+this.h*2/16, 3*this.w/4, this.h/8);
+        ctx.rect(this.x+this.h/8, this.y+this.h*7/16, 3*this.w/4, this.h/8);
+        ctx.rect(this.x+this.h/8, this.y+this.h*12/16, 3*this.w/4, this.h/8);
+        ctx.fill();
+    }    
+}
 
 class MenuLabel extends eskv.Label {
     active = true;
@@ -308,19 +327,18 @@ class MenuLabel extends eskv.Label {
     }
 }
 
-
-
-class Menu extends eskv.BoxLayout {
+class Menu extends eskv.ModalView {
     constructor() {
-        super({hints:{w:0.5, center_x:0.5}});
-        /**@type {eskv.BoxLayout['orientation']} */
+        super({hints:{w:0.8, h:0.8, center_y:0.5, center_x:0.5}});
+        /**@type {eskv.ModalView['orientation']} */
         this.orientation = 'vertical';
         this.selection = -1;
         this.prevGame = false;
         this.nextGame = false;
         this.paddingY = '0.02ah';
         this.spacingY = '0.02ah';
-        this.bgColor = 'rgba(0,0,0,0.5)'
+        this.bgColor = null;//'rgba(0,0,0,0.5)'
+        this.outlineColor = null;
 
         this.children = [
             new MenuLabel({text: 'Restart Game', value:1}),
@@ -339,13 +357,18 @@ class Menu extends eskv.BoxLayout {
     }
 
     on_touch_down(event, object, touch) {
+        super.on_touch_down(event, object, touch);
         if (this.collide(touch.rect)) {
+            // touch.grab(this);
             return true;
         }
         return false;
     }
 
     on_touch_up(event, object, touch) {
+        // if(touch.grabbed!==this) return false;
+        // touch.ungrab();
+        super.on_touch_up(event, object, touch);
         if (this.collide(touch.rect)) {
             for (let c of this.children) {
                 if (c instanceof MenuLabel && c.collide(touch.rect) && c.active) {
@@ -403,7 +426,7 @@ class ScoreBar extends eskv.BoxLayout {
                         text: (scorebar)=>{return scorebar.gameId>0? `GAME ${scorebar.gameId}` : 'RANDOM GAME'},
                         color: (app)=>app.colors['scoreText'],
                         halign: 'center',
-                        valign: 'top',
+                        valign: 'middle',
                     }),
                     new eskv.BoxLayout({
                         hints: {h:0.67},
@@ -454,8 +477,10 @@ class ScoreBar extends eskv.BoxLayout {
                         valign: 'top',
                     })    
                 ]
-            })
-    
+            }),
+            new MenuButton({id:'menubutton', hints:{h:'0.75h', w:'1wh'},
+                on_press: (e,o,v)=>SevenWordsApp.get().board.showMenu(),
+            }),    
         ]
 
         try {
@@ -649,11 +674,11 @@ class Board extends eskv.Widget {
 
     showMenu() {
         this.menu.selection = -1;
-        this.addChild(this.menu);
+        this.menu.popup();
     }
     
     hideMenu() {
-        this.removeChild(this.menu, false);
+        this.menu.close();
     }
 
     menuChoice(menu, selection) {
@@ -672,7 +697,7 @@ class Board extends eskv.Widget {
                 break;
             case 4:
                 this.hideMenu();
-                this.addChild(this.instructions);
+                this.instructions.popup();
                 break;
             case 5:
                 this.hideMenu();
