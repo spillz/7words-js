@@ -3,13 +3,26 @@
 import * as eskv from '../eskv/lib/eskv.js';
 import * as colors from './colors.js';
 
+//@ts-ignore
+import urlSoundCancelSelection from './sounds/cancel_selection.mp3';
+//@ts-ignore
+import urlSoundLevelCompleted from './sounds/level_completed.mp3';
+//@ts-ignore
+import urlSoundLevelFailed from './sounds/level_failed.mp3';
+//@ts-ignore
+import urlSoundMenu from './sounds/menu.mp3';
+//@ts-ignore
+import urlSoundSelect from './sounds/select.mp3';
+//@ts-ignore
+import urlSoundWordCompleted from './sounds/word_completed.mp3';
+
 const sounds = {
-    CANCEL_SELECTION: new Audio('sounds/cancel_selection.mp3'),
-    LEVEL_COMPLETED: new Audio('sounds/level_completed.mp3'),
-    LEVEL_FAILED: new Audio('sounds/level_failed.mp3'),
-    MENU: new Audio('sounds/menu.mp3'),
-    SELECT: new Audio('sounds/select.mp3'),
-    WORD_COMPLETED: new Audio('sounds/word_completed.mp3'),    
+    CANCEL_SELECTION: new Audio(urlSoundCancelSelection),
+    LEVEL_COMPLETED: new Audio(urlSoundLevelCompleted),
+    LEVEL_FAILED: new Audio(urlSoundLevelFailed),
+    MENU: new Audio(urlSoundMenu),
+    SELECT: new Audio(urlSoundSelect),
+    WORD_COMPLETED: new Audio(urlSoundWordCompleted),
 }
 
 const boardSize = 7;
@@ -858,7 +871,7 @@ class Board extends eskv.Widget {
         }
     }
 
-    /**@type {eskv.BoxLayout['layoutChildren']} */
+    /**@type {eskv.Widget['layoutChildren']} */
     layoutChildren() {
 /*
 1 Score              Game 1              Tile
