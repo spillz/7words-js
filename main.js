@@ -4,6 +4,8 @@ import * as eskv from '../eskv/lib/eskv.js';
 import * as colors from './colors.js';
 
 //@ts-ignore
+import urlWords from './resources/TWL06.txt';
+//@ts-ignore
 import urlSoundCancelSelection from './sounds/cancel_selection.mp3';
 //@ts-ignore
 import urlSoundLevelCompleted from './sounds/level_completed.mp3';
@@ -97,7 +99,7 @@ async function loadWords(url) {
     try {
         const response = await fetch(url);
         const text = await response.text();
-        const words = new Set(text.split('\n'));
+        const words = new Set(text.replace(/\r/g, '').split('\n'));
         return words;
     } catch (err) {
         console.error('Error loading file:', err);
@@ -279,10 +281,10 @@ const instructionsText = 'Objective: Get the highest score you can by forming 7 
 'and the free stack (top of screen) to form a word by touching the letter tiles in sequence. '+
 'A score prompt will show for a valid word, which you can press to score the word. '+
 'Press any of the selected letters to reset the current word.\n\n'+
-'Tile use: You do not have to use all letters in a row and any unused letters will move to the free stack'+
-'for use on futures rows.\\n\n'+
+'Tile use: You do not have to use all letters in a row and any unused letters will move to the reserve'+
+'for use on futures rows.\n\n'+
 'Scoring: Each word scores the sum of the tile values multiplied by the length of the word.\n\n'+
-'End game: The game ends when you have completed a word in all 7 rows in the letter stack '+
+'End game: The game ends when you have a completed word in all 7 rows in the letter stack '+
 'or if you cannot form a valid word on any row.';
 
 
@@ -297,7 +299,7 @@ class Instructions extends eskv.ModalView {
                 text: 'How to play',
                 fontSize: '0.05ah',
             }),
-            new eskv.ScrollView({ scrollW:false,
+            new eskv.ScrollView({ scrollW:false, uiZoom:false,
                 children: [
                     new eskv.Label({
                         hints: {h:null},
@@ -350,7 +352,7 @@ class MenuOption extends eskv.Label {
 
 class Menu extends eskv.ModalView {
     constructor() {
-        super({hints:{w:0.8, h:0.8, center_y:0.5, center_x:0.5}});
+        super({hints:{w:'0.8h', h:0.5, center_y:0.5, center_x:0.5}});
         /**@type {eskv.ModalView['orientation']} */
         this.orientation = 'vertical';
         this.selection = -1;
@@ -366,8 +368,8 @@ class Menu extends eskv.ModalView {
             new MenuOption({text: 'Next Game', value:2}),
             new MenuOption({text: 'Previous Game', value:3}),
             new MenuOption({text: 'Instructions', value:4}),
-            new MenuOption({text: 'Leaderboard', value:5}),
-            new MenuOption({text: 'Achievements', value:6}),
+            // new MenuOption({text: 'Leaderboard', value:5}),
+            // new MenuOption({text: 'Achievements', value:6}),
             new MenuOption({text: 'Theme', value:7}),
         ]
     }
@@ -1108,12 +1110,13 @@ class Board extends eskv.Widget {
 class SevenWordsApp extends eskv.App {
     constructor(words) {
         super();
+        this.id = 'app';
+        const themeName = localStorage.getItem('7Words/theme')??'beach';
+        this.colors = colors.loadTheme(themeName);
         this.words = words;
         this.instructions = new Instructions();
         this.menu = new Menu();
         this.menu.bind('selection', (e,o,v)=>this.menuChoice(this.menu,v));
-        const themeName = localStorage.getItem('7Words/theme')??'beach';
-        this.colors = colors.loadTheme(themeName);
         this.board = new Board();
         this.board.scorebar.bind('gameId', (e,o,v)=>{
             this.menu.uiUpdate(this.board.scorebar);
@@ -1186,7 +1189,7 @@ class SevenWordsApp extends eskv.App {
     }
 }
 
-loadWords('resources/TWL06.txt').then(words => {
+loadWords(urlWords).then(words => {
     var app = new SevenWordsApp(words);
     app.start();
 });
